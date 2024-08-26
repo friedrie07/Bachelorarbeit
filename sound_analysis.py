@@ -2,7 +2,6 @@ import wave
 from matplotlib import pyplot as plt
 import numpy as np
 import math
-import wavio 
 
 
 def display_pegel(file):
@@ -201,7 +200,7 @@ def ifft_levels(sweep_wave, noise_level=None):
         sample = sweep_list[index]  
         if sample <= noise_level:   #denoiseing
             sweep_list[index] = 0
-        sweep_list[index] = 32767 - abs(sample)   #get frequency levels
+        sweep_list[index] = (32767 - abs(sample))/32767   #get frequency levels
     return sweep_list
 
 
@@ -266,7 +265,11 @@ def ifft_profile_2(ifft_levels, wave_file, lowpass_limit=20, highpass_limit=2000
         complement_frequency_response.append(complement_frequency_response_sample)
     return complement_frequency_response
 
-
-a = ifft_levels(r"C:\Users\Fritz\Documents\Bachelorarbeit\Tests\linear_sweep_synch_rec.wav", None)
-
-ifft_frequencies(a, r"C:\Users\Fritz\Documents\Bachelorarbeit\Tests\1Hz-20kHz linear_sweep_synch.wav")
+def get_coeffs(recording_file, original_file):
+    levels = ifft_levels(recording_file, None)
+    target_response = ifft_profile_2(levels, original_file)
+    raw_coeffs = np.fft.fftshift(spectrum_analysis_sweep(target_response))
+    window = np.blackman(len(raw_coeffs))
+    windowed_coeffs = [window[i] * raw_coeffs[i] for i in range(len(raw_coeffs))]
+    return windowed_coeffs
+    
